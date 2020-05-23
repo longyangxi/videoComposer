@@ -1,0 +1,26 @@
+{
+  "name": "videocomposer",
+  "version": "1.0.0",
+  "description": "Compose several videos into one based on node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/longyangxi/videoComposer.git"
+  },
+  "keywords": [
+    "video",
+    "composer"
+  ],
+  "author": "longames",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/longyangxi/videoComposer/issues"
+  },
+  "homepage": "https://github.com/longyangxi/videoComposer#readme",
+  "dependencies": {
+    "bl": "^4.0.2"
+  }
+}
