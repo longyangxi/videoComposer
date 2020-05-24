@@ -1,5 +1,4 @@
 const { spawn } = require('child_process')
-const BufferList = require('bl')
 const fs = require("fs");
 
 var sourceVideos = [
@@ -88,39 +87,34 @@ async function compositeMp3(sources, result)
     return spawnAsync(cmd, args);
 }
 
-function spawnAsync(...args) {
-  const child = spawn(...args)
-  const stdout = child.stdout ? new BufferList() : ''
-  const stderr = child.stderr ? new BufferList() : ''
+function spawnAsync(cmd, argsArr) {
+  return new Promise(function (resolve, reject) {
+    const process = spawn(cmd, argsArr);
+    let mergedOut = '';
 
-  if (child.stdout) {
-    child.stdout.on('data', data => {
-      stdout.append(data)
+    process.on('error', reject);
+    process.stdout.on('data', data => {
+        console.log(data.toString());
     })
-  }
+    process.on('exit', code => {
+        if (code === 0) {
+          resolve();
+        } else {
+          const err = new Error(`process exited with code ${code}`)
+          err.code = code
+          reject(err)
+        }
+      })
 
-  if (child.stderr) {
-    child.stderr.on('data', data => {
-      stderr.append(data)
-    })
-  }
-
-  const promise = new Promise((resolve, reject) => {
-    child.on('error', reject)
-
-    child.on('exit', code => {
-      if (code === 0) {
-        resolve(stdout)
-      } else {
-        const err = new Error(`child exited with code ${code}`)
-        err.code = code
-        err.stderr = stderr
-        reject(err)
-      }
-    })
-  })
-
-  promise.child = child
-
-  return promise
+      process.stdout.setEncoding('utf8');
+      process.stdout.on('data', (chunk) => {
+          process.stdout.write(chunk, (_err) => { });
+          mergedOut += chunk;
+      });
+      
+      process.on('close', (_code, _signal) => {
+          // console.log('-'.repeat(30));
+          // console.log(mergedOut);
+      });
+  });
 }

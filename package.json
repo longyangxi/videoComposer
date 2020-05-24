@@ -20,7 +20,5 @@
     "url": "https://github.com/longyangxi/videoComposer/issues"
   },
   "homepage": "https://github.com/longyangxi/videoComposer#readme",
-  "dependencies": {
-    "bl": "^4.0.2"
-  }
+  "dependencies": {}
 }
