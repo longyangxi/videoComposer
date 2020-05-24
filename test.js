@@ -88,33 +88,38 @@ async function compositeMp3(sources, result)
 }
 
 function spawnAsync(cmd, argsArr) {
-  return new Promise(function (resolve, reject) {
-    const process = spawn(cmd, argsArr);
-    let mergedOut = '';
-
-    process.on('error', reject);
-    process.stdout.on('data', data => {
-        console.log(data.toString());
-    })
-    process.on('exit', code => {
-        if (code === 0) {
-          resolve();
-        } else {
-          const err = new Error(`process exited with code ${code}`)
-          err.code = code
-          reject(err)
-        }
+    return new Promise(function (resolve, reject) {
+      const cProcess = spawn(cmd, argsArr);
+      let mergedOut = '';
+  
+      cProcess.on('error', reject);
+      cProcess.stdout.on('data', data => {
+          console.log(data.toString());
       })
-
-      process.stdout.setEncoding('utf8');
-      process.stdout.on('data', (chunk) => {
-          process.stdout.write(chunk, (_err) => { });
-          mergedOut += chunk;
-      });
-      
-      process.on('close', (_code, _signal) => {
-          // console.log('-'.repeat(30));
-          // console.log(mergedOut);
-      });
-  });
-}
+      cProcess.on('exit', code => {
+          if (code === 0) {
+            resolve();
+          } else {
+            const err = new Error(`process exited with code ${code}`)
+            err.code = code
+            reject(err)
+          }
+        })
+  
+        cProcess.stdout.setEncoding('utf8');
+        cProcess.stdout.on('data', (chunk) => {
+            cProcess.stdout.write(chunk, (_err) => { });
+            mergedOut += chunk;
+        });
+        cProcess.stdout.on('error', function( err ) {
+          if (err.code == "EPIPE") {
+              process.exit(0);
+          }
+        });
+        
+        cProcess.on('close', (_code, _signal) => {
+            // console.log('-'.repeat(30));
+            // console.log(mergedOut);
+        });
+    });
+  }
