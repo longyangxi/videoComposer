@@ -20,5 +20,10 @@
     "url": "https://github.com/longyangxi/videoComposer/issues"
   },
   "homepage": "https://github.com/longyangxi/videoComposer#readme",
-  "dependencies": {}
+  "dependencies": {
+    "md5": "^2.2.1",
+    "request": "^2.88.2",
+    "stream": "0.0.2",
+    "tiktok-scraper": "^1.1.11"
+  }
 }
