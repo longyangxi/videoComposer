@@ -17,7 +17,7 @@ var jsonFile = tempFolder + "/temp.json5";
 
 //youtube横屏尺寸：1920×1080 / 1280×720
 var json = {
-    width: 1280, height: 720, //fps: 30,
+    width: 1280, height: 720,//fps: 15,
     audioFilePath: audioFile,
     outPath: "todo",
     defaults: {
@@ -30,7 +30,11 @@ var json = {
     clips: []
 }
 
-
+//todo
+//    const info = await TikTokScraper.getVideoMeta(url);
+//.imageUrl 或 covers.origin 用来在每个影片前做显示3秒？
+// text 标题 组合新标题，再自动翻译中文？
+//hashtags: 貌似text中就包含了哦
 compose("epic");
 
 async function prepare()
@@ -52,7 +56,8 @@ async function prepare()
         return null;
     }
 
-    json.clips.push({ duration: 3, layers: [{ type: 'pause', color: "red" }, { type: 'title', text: "Let's GO" }] })
+    // json.clips.push({ duration: 3, layers: [{ type: 'puase', color: "red" }, { type: 'title', text: "Let's GO" }] })
+    json.clips.push({ duration: 3, layers: [{ type: 'rainbow-colors'}, { type: 'title', text: "Let's GO" }] })
 
     let localVideos = [];
     for(var i = 0; i < sourceVideos.length; i++)
@@ -82,13 +87,19 @@ async function prepare()
         
         localVideos.push(localVideoPath);
 
-        json.clips.push({ duration: 3, layers: [{ type: 'pause', color: "green"}, { type: 'title', text: "NO. " + (i + 1) }] })
+        json.clips.push({ duration: 3, layers: [
+            { type: 'rainbow-colors'}, { type: 'title', text: "NO. " + (i + 1) }
+        ] })
 
-        json.clips.push({layers: [{ 
+        json.clips.push({layers: [
+            { type: 'rainbow-colors'},//todo，下层看不见，被挡住啦
+            { 
             type: 'video', //video, image, title, subtitle, title-background, fill-color, pause, radial-gradient, linear-gradient,rainbow-colors, canvas, gl, fabric
             path: localVideoPath, 
-            resizeMode: 'contain' /* stretch */
-        }] });
+            resizeMode: 'contain'  /* cover, stretch, contain */
+            }
+        ] 
+        });
 
         // json.clips.push({ duration: 3, layers: [{ type: 'pause' }] })
 
