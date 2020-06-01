@@ -17,7 +17,7 @@ var jsonFile = tempFolder + "/temp.json5";
 
 //youtube横屏尺寸：1920×1080 / 1280×720
 var json = {
-    width: 1280, height: 720,//fps: 15,
+    // width: 1280, height: 720,//fps: 15,
     audioFilePath: audioFile,
     outPath: "todo",
     defaults: {
@@ -32,10 +32,7 @@ var json = {
 
 // 这个可以叠加影片，卧槽，只是影片大小
 //https://stackoverflow.com/questions/35269387/ffmpeg-overlay-one-video-onto-another-video
-// ffmpeg -i background.mp4 -i sourceVideos/6738264977980935430.mp4 -filter_complex "[1:v]setpts=PTS-10/TB[a]; [0:v][a]overlay=enable=gte(t\,5):shortest=1[out]" -map [out] -map 0:a -c:v libx264 -crf 18 -pix_fmt yuv420p -c:a copy test.mp4
 
-//缩放影片
-//ffmpeg -i background.mp4 -filter:v scale=1280:-1 -c:a copy background1.mp4
 
 //todo
 //    const info = await TikTokScraper.getVideoMeta(url);
