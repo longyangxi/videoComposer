@@ -124,8 +124,7 @@ async function prepare(sourceVideos, useOriginSound)
 
         //解析hashtag
         let txts = videoData.text.split("#");
-        let titleTxt = txts[0] || " ";
-        //todo，去掉空白，去掉重复
+        let titleTxt = txts[0];// || " ";
         let theTags = txts.slice(1);
         for(let j = 0; j < theTags.length; j++)
         {
@@ -164,7 +163,6 @@ async function prepare(sourceVideos, useOriginSound)
         //////////////////////组合视频/////////////////////////////
 
     }   
-    console.log(hashTags);
     fs.writeFileSync(jsonFile, JSON.stringify(json));
     return {videos: localVideos, videoDatas, videoCovers, totalDuration, texts, hashTags};
 }
@@ -175,10 +173,8 @@ async function compose(sourceVideos, theMusic)
 
     if(!videos) return;
 
-    try{
-        fs.unlinkSync(audioFile);
-        fs.unlinkSync(jsonFile);
-    }catch (e) { }
+    if(fs.existsSync(jsonFile)) fs.unlinkSync(jsonFile);
+    if(fs.existsSync(audioFile)) fs.unlinkSync(audioFile);
     
     let tempMusic;
     //指定乐曲
@@ -205,11 +201,9 @@ async function compose(sourceVideos, theMusic)
     }
     await spawnAsync("editly", [jsonFile]);
 
-    try{
-        fs.unlinkSync(audioFile);
-        fs.unlinkSync(jsonFile);
-        if(tempMusic) fs.unlinkSync(tempMusic);
-    }catch (e) { }
+    if(fs.existsSync(jsonFile)) fs.unlinkSync(jsonFile);
+    if(fs.existsSync(audioFile)) fs.unlinkSync(audioFile);
+    if(tempMusic && fs.existsSync(tempMusic)) fs.unlinkSync(tempMusic);
     // fs.unlinkSync(tempFolder);
 }
 
@@ -218,6 +212,7 @@ async function getOneAudioFromVideos(videos, index)
 {
     var v = videos[index];
     var a = tempFolder + "/__t" + index + ".mp3";
+    if(fs.existsSync(a)) fs.unlinkSync(a);
     await videoToMp3(v, a);
     console.log(v + " to " + a);
     return a;
@@ -299,8 +294,9 @@ function spawnAsync(cmd, argsArr) {
   
         cProcess.stdout.setEncoding('utf8');
         cProcess.stdout.on('data', (chunk) => {
-            cProcess.stdout.write(chunk, (_err) => { });
-            mergedOut += chunk;
+            cProcess.stdout.write(chunk, (_err) => { console.log(_err) });
+            // mergedOut += chunk;
+            // console.log(data);
         });
         cProcess.stdout.on('error', function( err ) {
           if (err.code == "EPIPE") {
