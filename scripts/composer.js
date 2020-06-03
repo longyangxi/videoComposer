@@ -5,7 +5,8 @@ const md5 = require('md5');
 const musicDownloader = require("./utils/musicDownloader")
 const downloader = require("./utils/downloader");
 const generateCoverImage = require("./utils/generateCoverImage")
-
+const musicMetaUtil = require('music-metadata');
+const util = require('util');
 const {heartDogVideos, memeDogVideos, loveDogVideos, dogNotGoodVideos} = require("./videoGroupConfig/videoGroup_dog");
 
 var tempFolder = "../medias/temp";  
@@ -211,8 +212,19 @@ async function compose(sourceVideos, theMusic)
             music = await musicDownloader(theMusic);
         }
         //重复曲子，以免音乐不够长
-        //todo
-        await compositeMp3([music,music,music,music,music,music,music,music,music,music,music,music,music,music,music,music,music,music], audioFile)
+        let metadata = await musicMetaUtil.parseFile(music)
+        .catch( err => {
+            console.error(err.message);
+        });
+        let musicDuration = metadata.format.duration;
+        let duplicateCount = Math.ceil(totalDuration / musicDuration);
+        console.log("音乐长度: " + musicDuration + ", 需重复：" + duplicateCount);
+        let musicArr = [];
+        while(duplicateCount--) {
+            musicArr.push(music);
+        }
+        await compositeMp3(musicArr, audioFile)
+
         // json.audioFilePath = audioFile;
         fs.writeFileSync(jsonFile, JSON.stringify(json));
     //将源视频片段声音拼接    
