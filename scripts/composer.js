@@ -30,11 +30,11 @@ var json = {
     clips: []
 }
 
-compose(dogNotGoodVideos, "comedy");
+compose(dogNotGoodVideos, 6);//, "comedy");//, "../medias/sourceMusics/freepd/Silly Intro.mp3");//"comedy");
 // let music = "../medias/sourceMusics/freepd/Adventure.mp3";
 // compositeMp3([music,music,music,music,music,music,music,music,music,music], audioFile)
 
-async function prepare(sourceVideos)
+async function prepare(sourceVideos, useOriginSound)
 {
     try{
         fs.mkdirSync(tempFolder);
@@ -58,6 +58,8 @@ async function prepare(sourceVideos)
     // json.clips.push({ duration: 3, layers: [{ type: 'rainbow-colors'}, { type: 'title', text: "Let's GO" }] })
 
     let localVideos = [];
+    let texts = [];
+    let hashTags = [];
     let videoDatas = {};
     let videoCovers = {};
     let totalDuration = 0;
@@ -119,23 +121,42 @@ async function prepare(sourceVideos)
         localVideos.push(localVideoPath);
         videoDatas[localVideoPath] = videoData;
         videoCovers[localVideoPath] = localVideoCoverFile;
+
+        //解析hashtag
+        let txts = videoData.text.split("#");
+        let titleTxt = txts[0] || " ";
+        //todo，去掉空白，去掉重复
+        let theTags = txts.slice(1);
+        for(let j = 0; j < theTags.length; j++)
+        {
+            let theTag = theTags[j].replace(/\s/g, "");
+            if(hashTags.indexOf(theTag) == -1) {
+                hashTags.push(theTag);
+            }
+        }
+        //标题
+        texts.push({txt: titleTxt, t: formatTime(totalDuration)});
+        //时长
         totalDuration += videoData.videoMeta.duration;
 
         //////////////////////组合视频/////////////////////////////
-        json.clips.push({ duration: 3, layers: [
-            //将视频截图作为每段视频的起始效果
-            { type: 'image', path: localVideoCoverFile, duration: 3, zoomDirection: 'out' },
-            // { type: 'title-background', text: 'Speed up or slow down video', background: { type: 'radial-gradient' } },
-           /* { type: 'rainbow-colors'}, */{ type: 'title', text: "#" + (i + 1), position: "bottom" }
-        ] })
+        // if(!useOriginSound) {
+        //     json.clips.push({ duration: Math.min(2, titleTxt.split(" ").length * 0.3), layers: [
+        //         //将视频截图作为每段视频的起始效果
+        //         { type: 'image', path: localVideoCoverFile, zoomDirection: 'out' },
+        //         { type: 'subtitle', text: titleTxt, position: "bottom" }
+        //     ] })
+        // }
+        
+        // console.log(i + ": " + titleTxt + ", " + titleTxt.split(" ").length * 0.3);
 
         json.clips.push({layers: [
             { 
             type: 'video', //video, image, title, subtitle, title-background, fill-color, pause, radial-gradient, linear-gradient,rainbow-colors, canvas, gl, fabric
             path: localVideoPath, 
             resizeMode: 'contain'  /* cover, stretch, contain */
-            }
-            // { type: 'title', text: "#" + (i + 1), position: "bottom"}
+            },
+            { type: 'subtitle', text: titleTxt, position: "bottom" }
         ] 
         });
 
@@ -143,39 +164,63 @@ async function prepare(sourceVideos)
         //////////////////////组合视频/////////////////////////////
 
     }   
+    console.log(hashTags);
     fs.writeFileSync(jsonFile, JSON.stringify(json));
-    return {videos: localVideos, videoDatas, videoCovers, totalDuration};
+    return {videos: localVideos, videoDatas, videoCovers, totalDuration, texts, hashTags};
 }
 
-async function compose(sourceVideos, musicType)
+async function compose(sourceVideos, theMusic)
 {
-    let {videos, videoDatas, totalDuration} = await prepare(sourceVideos);
+    let {videos, videoDatas, totalDuration, texts, hashTags} = await prepare(sourceVideos, theMusic == null);
+
     if(!videos) return;
 
     try{
         fs.unlinkSync(audioFile);
         fs.unlinkSync(jsonFile);
-    }catch (e) { console.log(e)}
+    }catch (e) { }
     
+    let tempMusic;
     //指定乐曲
-    if(musicType) {
-        let music = await musicDownloader(musicType);
+    if(theMusic) {
+        let music;
+        if(parseInt(theMusic) >= 0) {
+            tempMusic = music = await getOneAudioFromVideos(videos, parseInt(theMusic))
+        } //指定路径的音乐
+        else if(theMusic.indexOf(".mp3") > -1) {
+            music = theMusic;
+        //指定某个视频里的背景音乐    
+        } 
+        else {
+            music = await musicDownloader(theMusic);
+        }
         //重复曲子，以免音乐不够长
-        await compositeMp3([music,music,music,music,music,music,music,music,music,music], audioFile)
+        //todo
+        await compositeMp3([music,music,music,music,music,music,music,music,music,music,music,music,music,music,music,music,music,music], audioFile)
         // json.audioFilePath = audioFile;
         fs.writeFileSync(jsonFile, JSON.stringify(json));
     //将源视频片段声音拼接    
     } else {
-        mergeAudioFromVideos(videos);
+        await mergeAudioFromVideos(videos);
     }
-    
     await spawnAsync("editly", [jsonFile]);
 
     try{
         fs.unlinkSync(audioFile);
         fs.unlinkSync(jsonFile);
-    }catch (e) { console.log(e)}
+        if(tempMusic) fs.unlinkSync(tempMusic);
+    }catch (e) { }
     // fs.unlinkSync(tempFolder);
+}
+
+//将系列视频第index的背景音乐提取出来
+async function getOneAudioFromVideos(videos, index)
+{
+    var v = videos[index];
+    var a = tempFolder + "/__t" + index + ".mp3";
+    await videoToMp3(v, a);
+    console.log(v + " to " + a);
+    return a;
 }
 
 //将系列视频的音频提取合并为一个
@@ -260,6 +305,8 @@ function spawnAsync(cmd, argsArr) {
         cProcess.stdout.on('error', function( err ) {
           if (err.code == "EPIPE") {
               process.exit(0);
+          } else {
+              console.log(err);
           }
         });
         
@@ -268,4 +315,21 @@ function spawnAsync(cmd, argsArr) {
             // console.log(mergedOut);
         });
     });
+  }
+
+  //秒到 分:秒 格式转换
+  function formatTime(seconds)
+  {
+      let min = Math.floor(seconds / 60);
+      let sec = seconds - min * 60;
+      return (paddingStrWithZero(min, 2) + ": " + paddingStrWithZero(sec, 2))
+  }
+
+  function paddingStrWithZero(str, num) 
+  {
+      str = "" + str;
+      while(str.length  <  num) {
+          str = "0" + str;
+      }
+      return str;
   }

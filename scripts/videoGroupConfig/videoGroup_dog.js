@@ -64,7 +64,7 @@ var dogNotGoodVideos = [
     "https://www.tiktok.com/@dogpets008/video/6830791194218433798",
     "https://www.tiktok.com/@dogpets008/video/6833366702332316933",
     "https://www.tiktok.com/@dogpets008/video/6832151680033754373",
-    "https://www.tiktok.com/@dogpets008/video/6831399093361708294",
+    // "https://www.tiktok.com/@dogpets008/video/6831399093361708294",
     "https://www.tiktok.com/@doglife008/video/6828872691613797638",
     "https://www.tiktok.com/@doglife008/video/6828180887851584774",
     "https://www.tiktok.com/@doglife008/video/6828373559065332997",
