@@ -4,6 +4,7 @@ const TikTokScraper = require('tiktok-scraper');
 const md5 = require('md5');
 const musicDownloader = require("./utils/musicDownloader")
 const downloader = require("./utils/downloader");
+const generateCoverImage = require("./utils/generateCoverImage")
 
 const {heartDogVideos, memeDogVideos, loveDogVideos, dogNotGoodVideos} = require("./videoGroupConfig/videoGroup_dog");
 
@@ -30,7 +31,9 @@ var json = {
     clips: []
 }
 
-compose(dogNotGoodVideos, 6);//, "comedy");//, "../medias/sourceMusics/freepd/Silly Intro.mp3");//"comedy");
+// generateCoverImage(["../medias/sourceVideos/6704779914064809218.jpg", "../medias/sourceVideos/6796886810669681922.jpg", "../medias/sourceVideos/6825794724058713349.jpg"]);
+
+compose(dogNotGoodVideos, 8);//, "comedy");//, "../medias/sourceMusics/freepd/Silly Intro.mp3");//"comedy");
 // let music = "../medias/sourceMusics/freepd/Adventure.mp3";
 // compositeMp3([music,music,music,music,music,music,music,music,music,music], audioFile)
 
@@ -61,7 +64,7 @@ async function prepare(sourceVideos, useOriginSound)
     let texts = [];
     let hashTags = [];
     let videoDatas = {};
-    let videoCovers = {};
+    let videoCovers = [];
     let totalDuration = 0;
 
     for(var i = 0; i < sourceVideos.length; i++)
@@ -120,11 +123,11 @@ async function prepare(sourceVideos, useOriginSound)
         
         localVideos.push(localVideoPath);
         videoDatas[localVideoPath] = videoData;
-        videoCovers[localVideoPath] = localVideoCoverFile;
+        videoCovers.push(localVideoCoverFile);
 
         //解析hashtag
         let txts = videoData.text.split("#");
-        let titleTxt = txts[0];// || " ";
+        let titleTxt = txts[0] || " ";
         let theTags = txts.slice(1);
         for(let j = 0; j < theTags.length; j++)
         {
@@ -169,9 +172,14 @@ async function prepare(sourceVideos, useOriginSound)
 
 async function compose(sourceVideos, theMusic)
 {
-    let {videos, videoDatas, totalDuration, texts, hashTags} = await prepare(sourceVideos, theMusic == null);
+    let {videos, videoDatas, videoCovers, totalDuration, texts, hashTags} = await prepare(sourceVideos, theMusic == null);
 
     if(!videos) return;
+
+    //自动产生数张截图
+    for(let i = 0; i < sourceVideos.length / 3; i++) {
+        await generateCoverImage(randomFromArray(videoCovers, 3), "cover" + i + ".jpg");
+    }
 
     if(fs.existsSync(jsonFile)) fs.unlinkSync(jsonFile);
     if(fs.existsSync(audioFile)) fs.unlinkSync(audioFile);
@@ -294,7 +302,7 @@ function spawnAsync(cmd, argsArr) {
   
         cProcess.stdout.setEncoding('utf8');
         cProcess.stdout.on('data', (chunk) => {
-            cProcess.stdout.write(chunk, (_err) => { console.log(_err) });
+            cProcess.stdout.write(chunk, (_err) => { if(_err) console.log(_err) });
             // mergedOut += chunk;
             // console.log(data);
         });
@@ -328,4 +336,19 @@ function spawnAsync(cmd, argsArr) {
           str = "0" + str;
       }
       return str;
+  }
+
+  function randomFromArray(imgArr, count)
+  {
+        if(imgArr.length <= count) return imgArr;
+        let arr = imgArr.concat();
+        let result = [];
+        while(result.length < count) {
+            let i = Math.floor(Math.random() * arr.length);
+            if(result.indexOf(arr[i]) == -1) {
+                result.push(arr[i]);
+                arr.splice(i, 1);
+            }
+        }
+        return result;
   }
