@@ -16,6 +16,8 @@ var outputVideoFolder =  "../medias/productVideos";
 var audioFile = tempFolder + "/temp.mp3";  
 var jsonFile = tempFolder + "/temp.json5";
 
+var videoSpeed = 1;//视频播放速度
+
 //youtube横屏尺寸：1920×1080 / 1280×720
 var json = {
     // width: 1280, height: 720,//fps: 15,
@@ -139,7 +141,8 @@ async function prepare(sourceVideos, useOriginSound)
         //标题
         texts.push({txt: titleTxt, t: formatTime(totalDuration)});
         //时长
-        totalDuration += videoData.videoMeta.duration;
+        let vDuration = videoData.videoMeta.duration;
+        totalDuration += vDuration;
 
         //////////////////////组合视频/////////////////////////////
         // if(!useOriginSound) {
@@ -152,12 +155,21 @@ async function prepare(sourceVideos, useOriginSound)
         
         // console.log(i + ": " + titleTxt + ", " + titleTxt.split(" ").length * 0.3);
 
-        json.clips.push({layers: [
-            { 
+        let videoDefine = { 
             type: 'video', //video, image, title, subtitle, title-background, fill-color, pause, radial-gradient, linear-gradient,rainbow-colors, canvas, gl, fabric
             path: localVideoPath, 
             resizeMode: 'contain'  /* cover, stretch, contain */
-            },
+            };
+
+        //截取视频的从cutFrom秒开始，到cutTo秒结束    
+        videoDefine.cutFrom = 0;
+        videoDefine.cutTo = vDuration;// * videoSpeed;
+
+        json.clips.push({
+            //videoSpeed越大，时间越短，加速了
+            duration: vDuration / videoSpeed, 
+            layers: [
+            videoDefine,
             { type: 'subtitle', text: titleTxt, position: "bottom" }
         ] 
         });
