@@ -25,6 +25,16 @@ node test.js
 ## 重复连接影片(4表示重复5遍)
    ffmpeg -stream_loop 4 -i parallel_way_background1.mp4 -c copy parallel_way_background_loop.mp4
 
+## 将影片模糊处理作为背景: https://stackoverflow.com/questions/30789367/ffmpeg-how-to-convert-vertical-video-with-black-sides-to-video-169-with-blur
+
+### 注意输出影片是1280*720,注意替换掉对应的变量
+### 注意/20这里表示模糊度，数字越小越模糊
+
+ffmpeg -i ./medias/productVideos/e9796102db67287558c53a5ba7ac247e.mp4 -lavfi "[0:v]scale=1280:-1,boxblur=luma_radius=min(h\,w)/20:luma_power=1:chroma_radius=min(cw\,ch)/20:chroma_power=1[bg];[0:v]scale=-1:720[ov];[bg][ov]overlay=(W-w)/2:(H-h)/2,crop=w=1280:h=720" output1.mp4
+
+## 给影片添加不断重复的背景音乐
+ffmpeg -y -stream_loop -1 -i "音乐地址" -i "视频地址" -map 0:a:0 -map 1:v:0 -c:v copy -c:a aac -ac 2 -shortest out.mp4
+
 ## 左右拼接影片(google: ffmpeg multiple side by side)
 
    ffmpeg \

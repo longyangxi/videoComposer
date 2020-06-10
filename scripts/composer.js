@@ -7,7 +7,7 @@ const downloader = require("./utils/downloader");
 const generateCoverImage = require("./utils/generateCoverImage")
 const musicMetaUtil = require('music-metadata');
 const util = require('util');
-const {heartDogVideos, memeDogVideos, loveDogVideos, dogNotGoodVideos} = require("./videoGroupConfig/videoGroup_dog");
+const translate = require("translate");
 
 var tempFolder = "../medias/temp";  
 var sourceVideosFolder = "../medias/sourceVideos"; 
@@ -22,21 +22,25 @@ var videoSpeed = 1;//视频播放速度
 //youtube横屏尺寸：1920×1080 / 1280×720
 var json = {
     // width: 1280, height: 720,//fps: 15,
-    audioFilePath: audioFile,
+    // audioFilePath: audioFile,
     outPath: "todo",
     defaults: {
       //editly中的transition类型
     //   const randomTransitionsSet = ['fade', 'fadegrayscale', 'directionalwarp', 'crosswarp', 'dreamyzoom', 'burn', 'crosszoom', 'simplezoom', 'linearblur', 'directional-left', 'directional-right', 'directional-up', 'directional-down'];   
-      transition: { name: 'fade', duration: 1},//随机的转场效果, 如果是 random 表示从上面的随机
+      transition: null,//{ name: 'fade', duration: 1},//随机的转场效果, 如果是 random 表示从上面的随机
       layer: { backgroundColor: 'black' },
     //   duration: 30
     },
     clips: []
 }
 
-// generateCoverImage(["../medias/sourceVideos/6704779914064809218.jpg", "../medias/sourceVideos/6796886810669681922.jpg", "../medias/sourceVideos/6825794724058713349.jpg"]);
+let videoConfig = JSON.parse(fs.readFileSync("./video.json"));
+compose(videoConfig.videos, videoConfig.music, videoConfig.covers);
+// compositeMp3(["../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3"], "test.mp3")
 
-compose(dogNotGoodVideos, 8);//, "comedy");//, "../medias/sourceMusics/freepd/Silly Intro.mp3");//"comedy");
+// generateCoverImage(["../medias/sourceVideos/6704779914064809218.jpg", "../medias/sourceVideos/6796886810669681922.jpg", "../medias/sourceVideos/6825794724058713349.jpg"]);
+// wideVideoAndBlurBack("../medias/sourceVideos/6829133319599344902.mp4", 1280, 720, "test.mp4");
+// compose(dogNotGoodVideos, 9);//, "comedy");//, "../medias/sourceMusics/freepd/Silly Intro.mp3");//"comedy");
 // let music = "../medias/sourceMusics/freepd/Adventure.mp3";
 // compositeMp3([music,music,music,music,music,music,music,music,music,music], audioFile)
 
@@ -53,11 +57,6 @@ async function prepare(sourceVideos, useOriginSound)
         sourceVideosStr += videoUrl;
     }
     json.outPath = outputVideoFolder + "/" +  md5(sourceVideosStr) + ".mp4";
-
-    if(fs.existsSync(json.outPath)) {
-        console.log("The video " + json.outPath + " exists!")
-        return {};
-    }
 
     //封面
     // json.clips.push({ duration: 3, layers: [{ type: 'puase', color: "red" }, { type: 'title', text: "Let's GO" }] })
@@ -139,6 +138,17 @@ async function prepare(sourceVideos, useOriginSound)
                 hashTags.push(theTag);
             }
         }
+
+        //https://translate.yandex.com/
+        translate.engine = 'yandex';
+        // translate.engine = 'google';
+        translate.key = 'trnsl.1.1.20200524T114704Z.0743ec0ad3be4831.e8bad52fc61288a31202466c3af5e5eb72412809';
+        let titleTxt_en = await translate(titleTxt, {from:"ja", to: "en"}).catch(e => {
+            titleTxt_en = titleTxt;
+        })
+        console.log(titleTxt, titleTxt_en)
+        titleTxt = titleTxt_en;
+
         //标题
         texts.push({txt: titleTxt, t: formatTime(totalDuration)});
         //时长
@@ -180,63 +190,120 @@ async function prepare(sourceVideos, useOriginSound)
 
     }   
     fs.writeFileSync(jsonFile, JSON.stringify(json));
-    return {videos: localVideos, videoDatas, videoCovers, totalDuration, texts, hashTags};
+    return {videos: localVideos, videoDatas, videoCovers, totalDuration, texts, hashTags, outPath: json.outPath};
 }
 
-async function compose(sourceVideos, theMusic)
+async function compose(sourceVideos, theMusic, coversIndex)
 {
-    let {videos, videoDatas, videoCovers, totalDuration, texts, hashTags} = await prepare(sourceVideos, theMusic == null);
+    let {videos, videoDatas, videoCovers, totalDuration, texts, hashTags, outPath} = await prepare(sourceVideos, theMusic == null);
 
-    if(!videos) return;
-
-    //自动产生数张截图
-    for(let i = 0; i < sourceVideos.length / 3; i++) {
-        await generateCoverImage(randomFromArray(videoCovers, 3), "cover" + i + ".jpg");
+    let videoExist = false;
+    if(fs.existsSync(outPath)) {
+        console.log("The video " + json.outPath + " exists!")
+        videoExist = true;
     }
 
-    if(fs.existsSync(jsonFile)) fs.unlinkSync(jsonFile);
-    if(fs.existsSync(audioFile)) fs.unlinkSync(audioFile);
+    //输出文字和tag
+    let textFile = outPath.replace(".mp4", ".txt");
     
-    let tempMusic;
-    //指定乐曲
-    if(theMusic) {
-        let music;
-        if(parseInt(theMusic) >= 0) {
-            tempMusic = music = await getOneAudioFromVideos(videos, parseInt(theMusic))
-        } //指定路径的音乐
-        else if(theMusic.indexOf(".mp3") > -1) {
-            music = theMusic;
-        //指定某个视频里的背景音乐    
-        } 
-        else {
-            music = await musicDownloader(theMusic);
-        }
-        //重复曲子，以免音乐不够长
-        let metadata = await musicMetaUtil.parseFile(music)
-        .catch( err => {
-            console.error(err.message);
-        });
-        let musicDuration = metadata.format.duration;
-        let duplicateCount = Math.ceil(totalDuration / musicDuration);
-        console.log("音乐长度: " + musicDuration + ", 需重复：" + duplicateCount);
-        let musicArr = [];
-        while(duplicateCount--) {
-            musicArr.push(music);
-        }
-        await compositeMp3(musicArr, audioFile)
-
-        // json.audioFilePath = audioFile;
-        fs.writeFileSync(jsonFile, JSON.stringify(json));
-    //将源视频片段声音拼接    
-    } else {
-        await mergeAudioFromVideos(videos);
+    let timeline = "";
+    for(let i = 0; i < texts.length; i++) {
+        let txt = texts[i];
+        timeline += (i ==  0 ? "" : "    ") + txt.t + " " + txt.txt + "\n";
     }
-    await spawnAsync("editly", [jsonFile]);
+
+    let textTemplate = `
+        Cute Pets is a channel with funny animal videos. 
+    If you like cute and funny compilations of pets and animals, then this is the channel for you. Enjoy! :)
+    You love dog, cat? You love the cuteness and fun of animals? This is for you!
+    
+    ►►►►►►►►► THANKS FOR WATCHING ◄◄◄◄◄◄◄◄◄
+    ► AND DON'T FORGET TO LIKE COMMENTS AND SUBSCRIBE!
+    Hope you like our compilation and don't forget to SUBSCRIBE us and share with your friends!
+    Because your support is my spirit to make more videos.Thanks🙏🙏😍😘
+
+    ►►►►►►►►► Timeline ◄◄◄◄◄◄◄◄◄
+    ${timeline}
+    ►►►►►►►►► Hashtags ◄◄◄◄◄◄◄◄◄
+    ${ "#" + hashTags.join(", #")}
+    ---------------------------------------------------------------------------------------------------
+    If you see a clip that you own that you did not submit or give consent for use, we have likely received false permissions and would be happy to resolve this for you! Please drop us a line at my email.`
+
+    fs.writeFileSync(textFile, textTemplate);
+
+    //指定了cover序号，否则随机
+    let coverFile = outPath.replace(".mp4", ".jpg");
+    if(coversIndex && coversIndex.length) {
+        let coversPath = [];
+        for(let i  = 0; i < coversIndex.length; i++) {
+            coversPath.push(videoCovers[parseInt(coversIndex[i])]);
+        }
+        await generateCoverImage(coversPath, coverFile);
+    } else {
+        await generateCoverImage(randomFromArray(videoCovers, 3), coverFile);
+    }
+    
+    if(!videoExist) await spawnAsync("editly", [jsonFile]);
+
+    //根据配置生成背景音乐
+    let {music, tempMusic} = await createBackgroudMusic(videos, theMusic, totalDuration, false);
+    let videoPathWithSound = outPath.replace(".mp4", "_s.mp4");
+    await mergetLoopAudioToVideo(outPath, music, videoPathWithSound);
+    
+    //转为宽视频，并模糊背景
+    await wideVideoAndBlurBack(videoPathWithSound, 1280, 720, videoPathWithSound.replace(".mp4", "w.mp4"));
 
     if(fs.existsSync(jsonFile)) fs.unlinkSync(jsonFile);
     if(fs.existsSync(audioFile)) fs.unlinkSync(audioFile);
     if(tempMusic && fs.existsSync(tempMusic)) fs.unlinkSync(tempMusic);
     // fs.unlinkSync(tempFolder);
+}
+
+async function createBackgroudMusic(videos, theMusic, totalDuration, loopMusic) {
+    let tempMusic;
+    let music;
+    //指定乐曲
+    if(theMusic) {
+        //指定某个视频里的音乐
+        if(parseInt(theMusic) >= 0) {
+            tempMusic = music = await getOneAudioFromVideos(videos, parseInt(theMusic))
+        } //指定路径的音乐
+        else if(theMusic.indexOf(".mp3") > -1) {
+            if(theMusic.indexOf("http") > -1) {
+                tempMusic = tempFolder + "/__download.mp3";
+                await downloader(theMusic, tempMusic);
+                music = tempMusic;
+            } else {
+                music = theMusic;
+            }
+        //下载freepd网站指定音乐 
+        } else {
+            music = await musicDownloader(theMusic);
+        }
+
+        //重复音乐到视频长度，暂时好些不用了，直接ffmpeg的命令搞定
+        if(loopMusic) {
+            //重复曲子，以免音乐不够长
+            let metadata = await musicMetaUtil.parseFile(music)
+            .catch( err => {
+                console.error(err.message);
+            });
+            let musicDuration = metadata.format.duration;
+            let duplicateCount = Math.ceil(totalDuration / musicDuration);
+            console.log("音乐长度: " + musicDuration + ", 需重复：" + duplicateCount);
+            let musicArr = [];
+            while(duplicateCount--) {
+                musicArr.push(music);
+            }
+            await compositeMp3(musicArr, audioFile)
+        }
+        
+        fs.writeFileSync(jsonFile, JSON.stringify(json));
+    //将源视频片段声音拼接    
+    } else {
+        music = await mergeAudioFromVideos(videos);
+    }
+    return {music, tempMusic};
 }
 
 //将系列视频第index的背景音乐提取出来
@@ -271,6 +338,7 @@ async function mergeAudioFromVideos(videos)
         var a = audios[i];
         fs.unlinkSync(a);
     }
+    return audioFile;
 }
 
 //ffmpeg -i filestore/6809350863975369990.mp4 test.mp3
@@ -302,7 +370,41 @@ async function compositeMp3(sources, result)
     return spawnAsync(cmd, args);
 }
 
+//ffmpeg -f concat -i list.txt -c copy out.mp3
+async function wideVideoAndBlurBack(src, w, h, to)
+{
+    if(fs.existsSync(to)) {
+        fs.unlinkSync(to);
+    }
+    var cmd = 'ffmpeg';
+    var blur = 20;//数字越大越清晰
+    var args = [
+        "-i", src,
+        "-lavfi", `[0:v]scale=${w}:-1,boxblur=luma_radius=min(h\\,w)/${blur}:luma_power=1:chroma_radius=min(cw\\,ch)/${blur}:chroma_power=1[bg];[0:v]scale=-1:${h}[ov];[bg][ov]overlay=(W-w)/2:(H-h)/2,crop=w=${w}:h=${h}`,
+        to
+    ];
+    //直接运行又点问题，该做手动命令吧
+    // return spawnAsync(cmd, args);
+    args[3] = '"' + args[3] + '"';
+    console.log("Run to get a youtube video: \nffmpeg " + args.join(" "));
+}
+
+//将一段音乐循环，添加到视频里
+//ffmpeg -y -stream_loop -1 -i "音乐地址" -i "视频地址" -map 0:a:0 -map 1:v:0 -c:v copy -c:a aac -ac 2 -shortest out.mp4
+async function mergetLoopAudioToVideo(inputVideo, music, outputVideo) {
+    var cmd = 'ffmpeg';
+    var args = [
+        "-y", "-stream_loop", "-1",
+        "-i", music,
+        "-i", inputVideo,
+        "-map", "0:a:0", "-map", "1:v:0", "-c:v", "copy", "-c:a", "aac", "-ac", "2", "-shortest",
+        outputVideo
+    ];
+    return spawnAsync(cmd, args);
+}
+
 function spawnAsync(cmd, argsArr) {
+    console.log(cmd, argsArr.join(" "));
     return new Promise(function (resolve, reject) {
       const cProcess = spawn(cmd, argsArr);
       let mergedOut = '';
@@ -350,7 +452,7 @@ function spawnAsync(cmd, argsArr) {
   {
       let min = Math.floor(seconds / 60);
       let sec = seconds - min * 60;
-      return (paddingStrWithZero(min, 2) + ": " + paddingStrWithZero(sec, 2))
+      return (paddingStrWithZero(min, 2) + ":" + paddingStrWithZero(sec, 2))
   }
 
   function paddingStrWithZero(str, num) 
