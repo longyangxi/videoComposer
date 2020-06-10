@@ -1,5 +1,7 @@
 # videoComposer
 Compose several videos into one based on node.js
+cd  scripts
+node composer.js config/狗狗玩游戏.json
 
 # setup
 1. npm install

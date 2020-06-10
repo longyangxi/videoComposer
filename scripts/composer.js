@@ -33,8 +33,7 @@ var json = {
     },
     clips: []
 }
-
-let videoConfig = JSON.parse(fs.readFileSync("./video.json"));
+let videoConfig = JSON.parse(fs.readFileSync(process.argv[2] || "./video.json"));
 compose(videoConfig.videos, videoConfig.music, videoConfig.covers);
 // compositeMp3(["../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3"], "test.mp3")
 
@@ -216,7 +215,7 @@ async function compose(sourceVideos, theMusic, coversIndex)
         Cute Pets is a channel with funny animal videos. 
     If you like cute and funny compilations of pets and animals, then this is the channel for you. Enjoy! :)
     You love dog, cat? You love the cuteness and fun of animals? This is for you!
-    
+
     ►►►►►►►►► THANKS FOR WATCHING ◄◄◄◄◄◄◄◄◄
     ► AND DON'T FORGET TO LIKE COMMENTS AND SUBSCRIBE!
     Hope you like our compilation and don't forget to SUBSCRIBE us and share with your friends!
