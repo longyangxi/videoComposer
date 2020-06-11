@@ -28,7 +28,10 @@ var json = {
       //editly中的transition类型
     //   const randomTransitionsSet = ['fade', 'fadegrayscale', 'directionalwarp', 'crosswarp', 'dreamyzoom', 'burn', 'crosszoom', 'simplezoom', 'linearblur', 'directional-left', 'directional-right', 'directional-up', 'directional-down'];   
       transition: null,//{ name: 'fade', duration: 1},//随机的转场效果, 如果是 random 表示从上面的随机
-      layer: { backgroundColor: 'black' },
+      layer: { 
+          backgroundColor: 'black',
+          fontPath: "Baloo-Regular.ttf"
+       },
     //   duration: 30
     },
     clips: []
@@ -180,7 +183,7 @@ async function prepare(sourceVideos, useOriginSound)
             duration: vDuration / videoSpeed, 
             layers: [
             videoDefine,
-            { type: 'subtitle', text: titleTxt, position: "bottom" }
+            { type: 'subtitle', text: titleTxt, position: "bottom", textColor:"#ffffff"}
         ] 
         });
 
@@ -212,7 +215,7 @@ async function compose(sourceVideos, theMusic, coversIndex)
     }
 
     let textTemplate = `
-        Cute Pets is a channel with funny animal videos. 
+    Cute Pets is a channel with funny animal videos. 
     If you like cute and funny compilations of pets and animals, then this is the channel for you. Enjoy! :)
     You love dog, cat? You love the cuteness and fun of animals? This is for you!
 
