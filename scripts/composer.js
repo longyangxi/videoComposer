@@ -36,6 +36,7 @@ var json = {
     },
     clips: []
 }
+let textTemplate = fs.readFileSync("./texts/pet.txt", "utf-8");
 let videoConfig = JSON.parse(fs.readFileSync(process.argv[2] || "./video.json"));
 compose(videoConfig.videos, videoConfig.music, videoConfig.covers);
 // compositeMp3(["../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3"], "test.mp3")
@@ -211,25 +212,12 @@ async function compose(sourceVideos, theMusic, coversIndex)
     let timeline = "";
     for(let i = 0; i < texts.length; i++) {
         let txt = texts[i];
-        timeline += (i ==  0 ? "" : "    ") + txt.t + " " + txt.txt + "\n";
+        timeline += txt.t + " " + txt.txt + "\n";
     }
 
-    let textTemplate = `
-    Cute Pets is a channel with funny animal videos. 
-    If you like cute and funny compilations of pets and animals, then this is the channel for you. Enjoy! :)
-    You love dog, cat? You love the cuteness and fun of animals? This is for you!
-
-    ►►►►►►►►► THANKS FOR WATCHING ◄◄◄◄◄◄◄◄◄
-    ► AND DON'T FORGET TO LIKE COMMENTS AND SUBSCRIBE!
-    Hope you like our compilation and don't forget to SUBSCRIBE us and share with your friends!
-    Because your support is my spirit to make more videos.Thanks🙏🙏😍😘
-
-    ►►►►►►►►► Timeline ◄◄◄◄◄◄◄◄◄
-    ${timeline}
-    ►►►►►►►►► Hashtags ◄◄◄◄◄◄◄◄◄
-    ${ "#" + hashTags.join(", #")}
-    ---------------------------------------------------------------------------------------------------
-    If you see a clip that you own that you did not submit or give consent for use, we have likely received false permissions and would be happy to resolve this for you! Please drop us a line at my email.`
+    //create text
+    textTemplate = textTemplate.replace("${timeline}", timeline);
+    textTemplate = textTemplate.replace("${hashtags}", "#" + hashTags.join(", #"));
 
     fs.writeFileSync(textFile, textTemplate);
 
