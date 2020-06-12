@@ -19,12 +19,20 @@ node test.js
 ## Examples: https://mylinuxtoybox.com/FFMPEG/index.html
 
 ## 缩放影片（scale=1280表示宽度缩放到1280，高度按对应比例, todo：mov作为源的不能预览，某个参数问题？）
-   ffmpeg -i parallel_way_background.mp4 -filter:v scale=1280:-1 -c:a copy parallel_way_background1.mp4
+   ffmpeg -i ../medias/subscribe.mp4 -filter:v scale=1280:-1 -c:a copy ../medias/subscribe1.mp4
 
 ## 切割影片(从0秒开始，持续3秒, todo：mov作为源的不能预览，某个参数问题？)
-   ffmpeg -i Subscribe_green_screen1.mov -ss 00:00:00 -t 00:00:03 -async 1 Subscribe_green_screen2.mov
+   ffmpeg -i Subscribe_green_screen.mov -ss 00:00:00 -t 00:00:03 -async 1 Subscribe_green_screen.mp4
 
-## 重复连接影片(4表示重复5遍)
+## 连接几个影片
+
+ffmpeg \
+-i ../medias/productVideos/1c30eafa589c165f8ba8f9148223f57a_sw.mp4 \
+-i ../medias/subscribe1.mp4 -filter_complex \
+"[0:v][0:a][1:v][1:a] concat=n=2:v=1:a=1 [outv] [outa]" \
+-map "[outv]" -map "[outa]" out.mp4
+
+## 将一个影片重复n遍(4表示重复5遍)
    ffmpeg -stream_loop 4 -i parallel_way_background1.mp4 -c copy parallel_way_background_loop.mp4
 
 ## 将影片模糊处理作为背景: https://stackoverflow.com/questions/30789367/ffmpeg-how-to-convert-vertical-video-with-black-sides-to-video-169-with-blur
@@ -80,6 +88,9 @@ ffmpeg \
 "overlay=(main_w-overlay_w-10):(main_h-overlay_h-10)" \
 -codec:a copy videoWithMarkBr.mp4
 
-## green screen 
+## green screen(第二个影片放上层，需要去掉绿色背景)
+#### -map 0:a -c:a表示要保留第一个输入视频的声音
 
-ffmpeg -y -i background1.mp4 -i Subscribe_green_screen2.mov -filter_complex '[1:v]colorkey=0x00FF00\:0.3\:0.2[ckout];[0:v][ckout]overlay[out]' -map '[out]' greenScreen.mp4
+ffmpeg -y -i backgroundVideo -i greenScreenVideo \
+-filter_complex '[1:v]colorkey=0x00FF00\:0.3\:0.2[ckout];[0:v][ckout]overlay[out]' \
+-map '[out]' -map 0:a -c:a  greenScreen.mp4

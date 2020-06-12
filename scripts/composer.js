@@ -38,7 +38,7 @@ var json = {
 }
 let textTemplate = fs.readFileSync("./texts/pet.txt", "utf-8");
 let videoConfig = JSON.parse(fs.readFileSync(process.argv[2] || "./video.json"));
-compose(videoConfig.videos, videoConfig.music, videoConfig.covers);
+compose(videoConfig.videos, videoConfig.music, videoConfig.covers, "");
 // compositeMp3(["../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3","../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3", "../medias/sourceMusics/freepd/Silly Intro.mp3"], "test.mp3")
 
 // generateCoverImage(["../medias/sourceVideos/6704779914064809218.jpg", "../medias/sourceVideos/6796886810669681922.jpg", "../medias/sourceVideos/6825794724058713349.jpg"]);
@@ -47,7 +47,7 @@ compose(videoConfig.videos, videoConfig.music, videoConfig.covers);
 // let music = "../medias/sourceMusics/freepd/Adventure.mp3";
 // compositeMp3([music,music,music,music,music,music,music,music,music,music], audioFile)
 
-async function prepare(sourceVideos, useOriginSound)
+async function prepare(sourceVideos, markTxt, useOriginSound)
 {
     try{
         fs.mkdirSync(tempFolder);
@@ -142,6 +142,11 @@ async function prepare(sourceVideos, useOriginSound)
             }
         }
 
+        hashTags.sort((a, b) => {
+            if(a.length < b.length) return -1;
+            else return 1;
+        })
+
         //https://translate.yandex.com/
         translate.engine = 'yandex';
         // translate.engine = 'google';
@@ -178,14 +183,17 @@ async function prepare(sourceVideos, useOriginSound)
         //截取视频的从cutFrom秒开始，到cutTo秒结束    
         videoDefine.cutFrom = 0;
         videoDefine.cutTo = vDuration;// * videoSpeed;
-
+        let clipLayers = [
+            videoDefine,
+            {type: 'subtitle', text: titleTxt, position: "bottom", textColor:"#ffffff"}
+        ];
+        if(markTxt) {
+            clipLayers.push({type: "title", position: "top", text: markTxt || "", textColor: "#cccccc"})
+        }
         json.clips.push({
             //videoSpeed越大，时间越短，加速了
             duration: vDuration / videoSpeed, 
-            layers: [
-            videoDefine,
-            { type: 'subtitle', text: titleTxt, position: "bottom", textColor:"#ffffff"}
-        ] 
+            layers: clipLayers 
         });
 
         // json.clips.push({ duration: 3, layers: [{ type: 'pause' }] })
@@ -196,9 +204,9 @@ async function prepare(sourceVideos, useOriginSound)
     return {videos: localVideos, videoDatas, videoCovers, totalDuration, texts, hashTags, outPath: json.outPath};
 }
 
-async function compose(sourceVideos, theMusic, coversIndex)
+async function compose(sourceVideos, theMusic, coversIndex, markTxt)
 {
-    let {videos, videoDatas, videoCovers, totalDuration, texts, hashTags, outPath} = await prepare(sourceVideos, theMusic == null);
+    let {videos, videoDatas, videoCovers, totalDuration, texts, hashTags, outPath} = await prepare(sourceVideos, markTxt, theMusic == null);
 
     let videoExist = false;
     if(fs.existsSync(outPath)) {
