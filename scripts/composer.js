@@ -157,6 +157,8 @@ async function prepare(sourceVideos, markTxt, useOriginSound)
         console.log(titleTxt, titleTxt_en)
         titleTxt = titleTxt_en;
 
+        if(!titleTxt) titleTxt = " ";
+
         //标题
         texts.push({txt: titleTxt, t: formatTime(totalDuration)});
         //时长
@@ -244,7 +246,9 @@ async function compose(sourceVideos, theMusic, coversIndex, markTxt)
     if(!videoExist) await spawnAsync("editly", [jsonFile]);
 
     //根据配置生成背景音乐
-    let {music, tempMusic} = await createBackgroudMusic(videos, theMusic, totalDuration, false);
+    let {music, tempMusic} = await createBackgroudMusic(videos, theMusic, totalDuration, false).catch(e => {
+        console.log(e);
+    })
     let videoPathWithSound = outPath.replace(".mp4", "_s.mp4");
     await mergetLoopAudioToVideo(outPath, music, videoPathWithSound);
     
@@ -269,7 +273,9 @@ async function createBackgroudMusic(videos, theMusic, totalDuration, loopMusic) 
         else if(theMusic.indexOf(".mp3") > -1) {
             if(theMusic.indexOf("http") > -1) {
                 tempMusic = tempFolder + "/__download.mp3";
-                await downloader(theMusic, tempMusic);
+                await downloader(theMusic, tempMusic).catch(e => {
+                    console.log(e);
+                })
                 music = tempMusic;
             } else {
                 music = theMusic;

@@ -7,6 +7,7 @@ node composer.js config/狗狗玩游戏.json
 1. npm install
 2. brew install ffmpeg (linux系统可能是 apt-get install ffmpeg)
 3. npm install -g editly (https://github.com/mifi/editly)
+4. 这个库生成多样化的视频缩略图：https://github.com/transitive-bullshit/ffmpeg-generate-video-preview
 
 # verify
 命令行输入ffmpeg和editly，有命令才算安装正确
